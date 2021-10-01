@@ -1,32 +1,60 @@
-const express = require('express');
+const { exec, ChildProcess } = require('child_process');
+const expressApp = require('express')();
+const fs = require('fs');
 const { createProxyMiddleware } = require('http-proxy-middleware');
+const process = require('process');
 
-const app = express();
+/** @type {Array.<ChildProcess>} */ let processes = []
 
-// Configuration
-const PORT = 8080;
-const HOST = "localhost";
+// Read configuration file
+var config = JSON.parse(fs.readFileSync("./config.json").toString());
 
-app.get('/info', (req, res, next) => {
-   res.send('This is a proxy service which proxies to Billing and Account APIs.');
+// Validate
+const PORT = process.env.PORT || config.port;
+const HOST = config.host;
+
+let invalid = false;
+if(!PORT || !HOST)
+   invalid = true;
+
+config.apps.forEach(app => {
+   if(!app.path || !app.target)
+      invalid = true;
+})
+
+if(invalid)
+   console.log("Invalid configuration!\nExiting..."),
+      exit(1);
+
+// Config apps (start if needed)
+/** @type {Array.<Object.<string, string>>} */ let apps = config.apps;
+apps.forEach(app => {
+   // Caution: TODO: Zombie processes are not handled
+   if(app.command) {
+      let p = exec(app.command, (err, stdout, stderr) => {
+         if(err) console.log("error -", app.command+":", err.message);
+         if(stderr) console.log("stderr -", app.command+":", stderr);
+         if(stdout) console.log("stdout -", app.command+":", stdout);
+      });
+      processes.push(p);
+   }
+
+   expressApp.use(app.path, createProxyMiddleware({
+      target: app.target,
+      changeOrigin: app.changeOrigin,
+      pathRewrite: app.pathRewrite
+   }));
 });
 
-app.use('/1', createProxyMiddleware({
-   target: "http://localhost:8000",
-   changeOrigin: true,
-   pathRewrite: {
-       [`^/1`]: '',
-   },
-}));
+// function exitHandler(_code){
+//    processes.forEach(p => p.kill());
+// }
 
-app.use('/2', createProxyMiddleware({
-   target: "http://localhost:9000",
-   changeOrigin: false,
-   pathRewrite: {
-       [`^/2`]: '',
-   },
-}));
+// process.on("exit", exitHandler);
+// process.on("SIGINT", exitHandler);
+// process.on("SIGTERM", exitHandler);
+// process.on("SIGKILL", exitHandler);
 
-app.listen(PORT, HOST, () => {
+expressApp.listen(PORT, HOST, () => {
    console.log(`Starting Proxy at ${HOST}:${PORT}`);
 });

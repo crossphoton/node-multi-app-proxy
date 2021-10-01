@@ -1,0 +1,24 @@
+{
+    "port": 8080,
+    "host": "localhost",
+    "apps": [
+        {
+            "path": "/first",
+            "command": "node apps/first/index.js",
+            "target": "http://localhost:8000",
+            "changeOrigin": true,
+            "pathRewrite": {
+                "/first": ""
+            }
+        },
+        {
+            "path": "/second",
+            "command": "node apps/second/index.js",
+            "target": "http://localhost:9000",
+            "changeOrigin": true,
+            "pathRewrite": {
+                "/second": ""
+            }
+        }
+    ]
+}
