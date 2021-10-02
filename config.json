@@ -1,6 +1,5 @@
 {
     "port": 8080,
-    "host": "localhost",
     "apps": [
         {
             "path": "/first",
