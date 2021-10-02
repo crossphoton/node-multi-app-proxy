@@ -53,5 +53,5 @@ apps.forEach(app => {
 // process.on("SIGKILL", exitHandler);
 
 expressApp.listen(PORT, () => {
-   console.log(`Starting Proxy at ${HOST}:${PORT}`);
+   console.log(`Starting Proxy at ${PORT}`);
 });
