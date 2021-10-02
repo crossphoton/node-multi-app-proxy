@@ -11,11 +11,8 @@ var config = JSON.parse(fs.readFileSync("./config.json").toString());
 
 // Validate
 const PORT = process.env.PORT || config.port;
-const HOST = config.host;
 
-let invalid = false;
-if(!PORT || !HOST)
-   invalid = true;
+let invalid = !PORT;
 
 config.apps.forEach(app => {
    if(!app.path || !app.target)
@@ -55,6 +52,6 @@ apps.forEach(app => {
 // process.on("SIGTERM", exitHandler);
 // process.on("SIGKILL", exitHandler);
 
-expressApp.listen(PORT, HOST, () => {
+expressApp.listen(PORT, () => {
    console.log(`Starting Proxy at ${HOST}:${PORT}`);
 });
